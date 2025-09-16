@@ -1,0 +1,340 @@
+{
+  "serverManager": {
+    "version": "2.0.0",
+    "environment": "production"
+  },
+  "jars": {
+    "paper-1.8.8": {
+      "path": "templates/server-jars/paper-1.8.8-445.jar",
+      "url": "https://api.papermc.io/v2/projects/paper/versions/1.8.8/builds/445/downloads/paper-1.8.8-445.jar",
+      "javaVersion": 8,
+      "minMemory": "512M",
+      "maxMemory": "2G",
+      "flags": [
+        "-XX:+UseG1GC",
+        "-XX:G1HeapRegionSize=4M",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+ParallelRefProcEnabled",
+        "-XX:+AlwaysPreTouch"
+      ]
+    },
+    "paper-1.20.4": {
+      "path": "templates/server-jars/paper-1.20.4-496.jar",
+      "url": "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/496/downloads/paper-1.20.4-496.jar",
+      "javaVersion": 17,
+      "minMemory": "1G",
+      "maxMemory": "4G",
+      "flags": [
+        "-XX:+UseG1GC",
+        "-XX:G1HeapRegionSize=4M",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+ParallelRefProcEnabled",
+        "-XX:+AlwaysPreTouch"
+      ]
+    },
+    "velocity": {
+      "path": "templates/server-jars/velocity-3.3.0.jar",
+      "url": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/365/downloads/velocity-3.3.0-SNAPSHOT-365.jar",
+      "javaVersion": 17,
+      "minMemory": "512M",
+      "maxMemory": "1G",
+      "flags": [
+        "-XX:+UseG1GC"
+      ]
+    }
+  },
+  "java": {
+    "8": "C:\\Program Files\\Java\\jdk1.8.0_202\\bin\\java.exe",
+    "17": "java",
+    "23": "C:\\Program Files\\Java\\jdk-23\\bin\\java.exe"
+  },
+  "paths": {
+    "templates": "./templates",
+    "configs": "./templates/configs",
+    "plugins": "./templates/plugins",
+    "servers": "./servers",
+    "worlds": "./templates/worlds",
+    "logs": "./logs",
+    "data": "./data",
+    "backups": "./backups"
+  },
+  "proxy": {
+    "enabled": true,
+    "type": "velocity",
+    "jar": "velocity",
+    "host": "0.0.0.0",
+    "port": 25565,
+    "directory": "./servers/velocity",
+    "defaultServer": "hub",
+    "fallbackServers": [
+      "hub",
+      "limbo"
+    ],
+    "autoStart": true,
+    "autoRestart": true,
+    "configTemplate": "velocity",
+    "motd": "&3&lMinecraft Network &7| &fPowered by ServerManager",
+    "plugins": [
+      "servermanager"
+    ]
+  },
+  "servers": {
+    "hub": {
+      "enabled": true,
+      "id": "hub",
+      "type": "static",
+      "port": 25501,
+      "jar": "paper-1.8.8",
+      "template": "hub",
+      "configTemplate": "hub",
+      "autoStart": true,
+      "maxPlayers": 100,
+      "plugins": [
+        "core",
+        "hub"
+      ],
+      "description": "Main Hub Server"
+    },
+    "static": [
+      {
+        "enabled": true,
+        "id": "limbo",
+        "type": "static",
+        "port": 25599,
+        "jar": "paper-1.8.8",
+        "template": "limbo",
+        "configTemplate": "limbo",
+        "autoStart": false,
+        "maxPlayers": 50,
+        "plugins": [
+          "core"
+        ],
+        "description": "Fallback Limbo Server"
+      }
+    ],
+    "dynamic": {
+      "enabled": true,
+      "startPort": 25601,
+      "maxServers": 10,
+      "defaultTemplate": "mini",
+      "shutdownEmpty": true,
+      "emptyTimeout": 300000,
+      "requestTimeout": 5000,
+      "healthCheckInterval": 10000,
+      "templates": {
+        "mini": {
+          "jar": "paper-1.8.8",
+          "template": "game",
+          "maxPlayers": 16,
+          "plugins": [
+            "core",
+            "minigame"
+          ],
+          "worldType": "void",
+          "gameConfig": {
+            "minPlayers": 2,
+            "maxPlayers": 16,
+            "startCountdown": 10,
+            "gameTime": 600
+          }
+        },
+        "bedwars": {
+          "jar": "paper-1.8.8",
+          "template": "game",
+          "maxPlayers": 16,
+          "plugins": [
+            "core",
+            "minigame",
+            "bedwars"
+          ],
+          "worldType": "void",
+          "gameConfig": {
+            "minPlayers": 2,
+            "maxPlayers": 16,
+            "teams": 4,
+            "startCountdown": 20,
+            "respawnTime": 5
+          }
+        },
+        "sumo": {
+          "jar": "paper-1.8.8",
+          "template": "game",
+          "maxPlayers": 8,
+          "plugins": [
+            "core",
+            "minigame",
+            "sumo"
+          ],
+          "worldType": "void",
+          "gameConfig": {
+            "minPlayers": 2,
+            "maxPlayers": 8,
+            "rounds": 3,
+            "roundTime": 120
+          }
+        },
+        "bridge": {
+          "jar": "paper-1.8.8",
+          "template": "game",
+          "maxPlayers": 4,
+          "plugins": [
+            "core",
+            "minigame",
+            "bridge"
+          ],
+          "worldType": "void",
+          "gameConfig": {
+            "minPlayers": 2,
+            "maxPlayers": 4,
+            "goals": 5
+          }
+        },
+        "creative": {
+          "jar": "paper-1.20.4",
+          "template": "creative",
+          "maxPlayers": 20,
+          "plugins": [
+            "core",
+            "worldedit"
+          ],
+          "worldType": "flat"
+        }
+      }
+    }
+  },
+  "pool": {
+    "enabled": true,
+    "minServers": 2,
+    "maxServers": 5,
+    "minWarm": 2,
+    "maxWarm": 5,
+    "template": "mini",
+    "warmupTime": 30000,
+    "idleTimeout": 300000,
+    "scaleUpThreshold": 0.8,
+    "scaleDownThreshold": 0.3,
+    "checkInterval": 30000,
+    "scaleCheckInterval": 30000
+  },
+  "ports": {
+    "rangeStart": 25600,
+    "rangeEnd": 25700,
+    "apiPort": 3000,
+    "velocityPort": 25565
+  },
+  "redis": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "db": 0,
+    "keyPrefix": "mcserver:",
+    "channels": {
+      "serverRequest": "server:request",
+      "serverResponse": "server:response",
+      "serverConfig": "server:config",
+      "serverStatus": "server:status",
+      "playerTracking": "player:tracking"
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics": true,
+    "healthChecks": true,
+    "interval": 30000,
+    "metricsInterval": 60000,
+    "logLevel": "info",
+    "logFile": "logs/server-manager.log"
+  },
+  "logging": {
+    "level": "info",
+    "console": true,
+    "file": true,
+    "maxFiles": 10,
+    "maxSize": "10m"
+  },
+  "security": {
+    "apiKey": "P3az8an0hBgCKKxQtA14QlTEcPTFpVJs98B6tXxS0XA=",
+    "apiEnabled": true,
+    "allowedIPs": [
+      "127.0.0.1",
+      "localhost"
+    ],
+    "rateLimit": {
+      "enabled": true,
+      "windowMs": 60000,
+      "maxRequests": 100
+    },
+    "corsOrigins": [
+      "http://localhost:3000",
+      "http://localhost:3001"
+    ]
+  },
+  "features": {
+    "autoRestart": {
+      "enabled": true,
+      "onCrash": true,
+      "maxRetries": 3,
+      "retryDelay": 5000
+    },
+    "playerTracking": {
+      "enabled": true,
+      "storeHistory": true,
+      "historyDays": 30
+    },
+    "serverSync": {
+      "enabled": true,
+      "syncInterval": 5000
+    },
+    "dynamicScaling": {
+      "enabled": true,
+      "predictive": false
+    },
+    "loadBalancing": {
+      "enabled": true,
+      "strategy": "least-connections",
+      "stickyServers": false
+    }
+  },
+  "api": {
+    "enabled": true,
+    "port": 3000,
+    "host": "0.0.0.0",
+    "dashboard": true,
+    "websocket": true,
+    "restApi": true,
+    "authentication": {
+      "enabled": false,
+      "type": "basic",
+      "users": []
+    }
+  },
+  "cleanup": {
+    "enabled": true,
+    "serverLogs": {
+      "enabled": true,
+      "maxAge": 7,
+      "compress": true,
+      "schedule": "0 0 * * *"
+    },
+    "crashReports": {
+      "enabled": true,
+      "maxAge": 30,
+      "maxCount": 100
+    },
+    "tempFiles": {
+      "enabled": true,
+      "maxAge": 1,
+      "schedule": "0 */6 * * *"
+    }
+  },
+  "backup": {
+    "enabled": false,
+    "schedule": "0 3 * * *",
+    "retention": 7,
+    "compress": true,
+    "includeWorlds": true,
+    "includePlugins": false,
+    "includeConfigs": true
+  }
+}

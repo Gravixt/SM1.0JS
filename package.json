@@ -1,0 +1,30 @@
+{
+  "name": "minecraft-server-manager",
+  "version": "2.0.0",
+  "description": "Dynamic Minecraft Server Manager with Plugin-Driven Configuration",
+  "main": "src/ServerManager.js",
+  "scripts": {
+    "start": "node src/ServerManager.js",
+    "setup": "node setup.js",
+    "dev": "nodemon src/ServerManager.js",
+    "dashboard": "node api/ApiServer.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4",
+    "redis": "^4.5.1",
+    "fs-extra": "^11.1.0",
+    "axios": "^1.2.0",
+    "chalk": "^4.1.2",
+    "prompts": "^2.4.2",
+    "winston": "^3.8.2",
+    "node-cron": "^3.0.2",
+    "uuid": "^9.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20",
+    "jest": "^29.3.1"
+  }
+}

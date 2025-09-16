@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Manager</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+
+        .status-indicator.offline {
+            background: #ef4444;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .server-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .server-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: translateX(5px);
+        }
+
+        .server-info {
+            flex: 1;
+        }
+
+        .server-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .server-meta {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        button.success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .console {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            padding: 15px;
+            border-radius: 5px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .console-line {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
+
+        .console-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .console-input input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .pool-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pool-stat {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .pool-stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .pool-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .add-server-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-server-section select {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .add-server-section select option {
+            background: #1a1a1a;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            animation: pulse 2s infinite;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Minecraft Server Manager</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator" id="redis-status"></div>
+                    <span>Redis: <span id="redis-text">Connecting...</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Total Players: <span id="total-players">0</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Active Servers: <span id="active-servers">0</span></span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Static Servers -->
+            <div class="card">
+                <h2>
+                    Static Servers
+                    <button onclick="refreshStatus()" class="success">Refresh</button>
+                </h2>
+                <div class="server-list" id="static-servers">
+                    <div class="loading">Loading servers...</div>
+                </div>
+            </div>
+
+            <!-- Dynamic Servers -->
+            <div class="card">
+                <h2>Dynamic Servers</h2>
+                <div class="add-server-section">
+                    <select id="game-type">
+                        <option value="mini">Mini Game</option>
+                        <option value="bedwars">Bedwars</option>
+                        <option value="sumo">Sumo</option>
+                        <option value="creative">Creative</option>
+                    </select>
+                    <button onclick="startDynamicServer()" class="success">Start Server</button>
+                </div>
+                <div class="server-list" id="dynamic-servers">
+                    <div class="loading">Loading servers...</div>
+                </div>
+            </div>
+
+            <!-- Pool Status -->
+            <div class="card">
+                <h2>Pool Status</h2>
+                <div class="pool-status">
+                    <div class="pool-stat">
+                        <div class="pool-stat-value" id="pool-size">0</div>
+                        <div class="pool-stat-label">Warm Pool</div>
+                    </div>
+                    <div class="pool-stat">
+                        <div class="pool-stat-value" id="pool-reserved">0</div>
+                        <div class="pool-stat-label">Reserved</div>
+                    </div>
+                    <div class="pool-stat">
+                        <div class="pool-stat-value" id="pool-available">0</div>
+                        <div class="pool-stat-label">Available</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button onclick="scalePool()" class="success">Scale Pool</button>
+                </div>
+            </div>
+
+            <!-- Console -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>
+                    Console
+                    <select id="console-server" onchange="switchConsole()">
+                        <option value="">Select a server...</option>
+                    </select>
+                </h2>
+                <div class="console" id="console">
+                    <div class="console-line">Select a server to view console output...</div>
+                </div>
+                <div class="console-input">
+                    <input type="text" id="command-input" placeholder="Enter command..." disabled>
+                    <button onclick="sendCommand()" id="send-btn" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const socket = io();
+        let currentConsoleServer = null;
+        let status = null;
+
+        // Socket events
+        socket.on('connect', () => {
+            showToast('Connected to server', 'success');
+        });
+
+        socket.on('status', (data) => {
+            status = data;
+            updateDashboard(data);
+        });
+
+        socket.on('consoleLine', (data) => {
+            if (data.serverId === currentConsoleServer) {
+                addConsoleLine(data.line);
+            }
+        });
+
+        socket.on('consoleHistory', (data) => {
+            if (data.serverId === currentConsoleServer) {
+                const console = document.getElementById('console');
+                console.innerHTML = '';
+                data.lines.forEach(line => {
+                    addConsoleLine(typeof line === 'object' ? line.line : line);
+                });
+            }
+        });
+
+        function updateDashboard(data) {
+            // Update status bar
+            document.getElementById('redis-text').textContent = data.redis ? 'Connected' : 'Disconnected';
+            document.getElementById('redis-status').className = 'status-indicator ' + (data.redis ? '' : 'offline');
+            
+            let totalPlayers = 0;
+            let activeServers = 0;
+
+            // Update static servers
+            const staticContainer = document.getElementById('static-servers');
+            if (data.staticServers && data.staticServers.length > 0) {
+                staticContainer.innerHTML = data.staticServers.map(server => {
+                    if (server.status === 'running' || server.status === 'ready') activeServers++;
+                    if (server.players) totalPlayers += server.players.length;
+                    
+                    return `
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-name">${server.id}</div>
+                                <div class="server-meta">
+                                    Port: ${server.port} | Players: ${server.playerCount || 0}/${server.maxPlayers || 20}
+                                    | Status: ${server.status || 'stopped'}
+                                </div>
+                            </div>
+                            <div class="server-actions">
+                                ${server.status === 'running' || server.status === 'ready' ? 
+                                    `<button onclick="stopStaticServer('${server.id}')" class="danger">Stop</button>` :
+                                    `<button onclick="startStaticServer('${server.id}')" class="success">Start</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                staticContainer.innerHTML = '<div class="server-item">No static servers configured</div>';
+            }
+
+            // Update dynamic servers
+            const dynamicContainer = document.getElementById('dynamic-servers');
+            if (data.dynamicServers && data.dynamicServers.length > 0) {
+                dynamicContainer.innerHTML = data.dynamicServers.map(server => {
+                    if (server.status === 'running' || server.status === 'ready') activeServers++;
+                    if (server.players) totalPlayers += server.players.length;
+                    
+                    return `
+                        <div class="server-item">
+                            <div class="server-info">
+                                <div class="server-name">${server.id}</div>
+                                <div class="server-meta">
+                                    Port: ${server.port} | Players: ${server.playerCount || 0}/${server.maxPlayers || 20}
+                                    | Type: ${server.gameType || 'unknown'}
+                                </div>
+                            </div>
+                            <div class="server-actions">
+                                <button onclick="stopDynamicServer('${server.id}')" class="danger">Stop</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                dynamicContainer.innerHTML = '<div class="server-item">No dynamic servers running</div>';
+            }
+
+            // Update console server list
+            const consoleSelect = document.getElementById('console-server');
+            const currentValue = consoleSelect.value;
+            consoleSelect.innerHTML = '<option value="">Select a server...</option>';
+            
+            [...(data.staticServers || []), ...(data.dynamicServers || [])]
+                .filter(s => s.status === 'running' || s.status === 'ready')
+                .forEach(server => {
+                    const option = document.createElement('option');
+                    option.value = server.id;
+                    option.textContent = server.id;
+                    consoleSelect.appendChild(option);
+                });
+            
+            if (currentValue) {
+                consoleSelect.value = currentValue;
+            }
+
+            // Update pool status
+            if (data.pool) {
+                document.getElementById('pool-size').textContent = data.pool.warmPoolSize || 0;
+                document.getElementById('pool-reserved').textContent = data.pool.reservedServers || 0;
+                document.getElementById('pool-available').textContent = 
+                    (data.pool.warmPoolSize || 0) - (data.pool.reservedServers || 0);
+            }
+
+            // Update totals
+            document.getElementById('total-players').textContent = totalPlayers;
+            document.getElementById('active-servers').textContent = activeServers;
+        }
+
+        function addConsoleLine(line) {
+            const console = document.getElementById('console');
+            const lineElement = document.createElement('div');
+            lineElement.className = 'console-line';
+            lineElement.textContent = line;
+            console.appendChild(lineElement);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 500 lines
+            while (console.children.length > 500) {
+                console.removeChild(console.firstChild);
+            }
+        }
+
+        function switchConsole() {
+            const select = document.getElementById('console-server');
+            const serverId = select.value;
+            
+            if (currentConsoleServer) {
+                socket.emit('unsubscribeConsole', currentConsoleServer);
+            }
+            
+            if (serverId) {
+                currentConsoleServer = serverId;
+                socket.emit('subscribeConsole', serverId);
+                document.getElementById('command-input').disabled = false;
+                document.getElementById('send-btn').disabled = false;
+                document.getElementById('console').innerHTML = '<div class="console-line">Loading console...</div>';
+            } else {
+                currentConsoleServer = null;
+                document.getElementById('command-input').disabled = true;
+                document.getElementById('send-btn').disabled = true;
+                document.getElementById('console').innerHTML = '<div class="console-line">Select a server to view console output...</div>';
+            }
+        }
+
+        function sendCommand() {
+            const input = document.getElementById('command-input');
+            const command = input.value.trim();
+            
+            if (command && currentConsoleServer) {
+                socket.emit('sendCommand', {
+                    serverId: currentConsoleServer,
+                    command: command
+                });
+                input.value = '';
+            }
+        }
+
+        document.getElementById('command-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendCommand();
+            }
+        });
+
+        async function startStaticServer(name) {
+            try {
+                const response = await fetch(`/api/static/${name}/start`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`Started static server: ${name}`, 'success');
+                } else {
+                    showToast(`Failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function stopStaticServer(name) {
+            try {
+                const response = await fetch(`/api/static/${name}/stop`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`Stopped static server: ${name}`, 'success');
+                } else {
+                    showToast(`Failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function startDynamicServer() {
+            const gameType = document.getElementById('game-type').value;
+            try {
+                const response = await fetch('/api/dynamic/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gameType })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`Started ${gameType} server`, 'success');
+                } else {
+                    showToast(`Failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function stopDynamicServer(id) {
+            try {
+                const response = await fetch(`/api/dynamic/${id}/stop`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`Stopped server: ${id}`, 'success');
+                } else {
+                    showToast(`Failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function scalePool() {
+            const size = prompt('Enter desired pool size:', '3');
+            if (size && !isNaN(size)) {
+                try {
+                    const response = await fetch('/api/pool/scale', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ size: parseInt(size) })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(`Pool scaling initiated`, 'success');
+                    } else {
+                        showToast(`Failed: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    showToast(`Error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function refreshStatus() {
+            const response = await fetch('/api/status');
+            const data = await response.json();
+            updateDashboard(data);
+            showToast('Status refreshed', 'success');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            toast.style.background = type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 
+                                     type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 
+                                     'rgba(0, 0, 0, 0.8)';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
